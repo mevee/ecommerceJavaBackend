@@ -2,6 +2,7 @@ package com.ecommerce.repository;
 
 import com.ecommerce.model.Category;
 import com.ecommerce.model.request.product.AddProductRequest;
+import com.ecommerce.model.response.product.InventoryProduct;
 import com.ecommerce.model.response.product.Product;
 import com.ecommerce.model.response.user.JavaAuthTokenResponse;
 import com.ecommerce.model.sku.Sku;
@@ -60,28 +61,67 @@ public class ProductRepositoryImpl implements ProductRepository {
         return null;
     }
 
+    private boolean checkHasNext(String searchQuery, int nextOffset) {
+        log.info("----- checkHasNext() -------------");
+
+        String query = SqlQueryUtils.LOAD_INV_PRODUCTS.replace("searchQuery", searchQuery);
+        query = query.replace("?", searchQuery);
+        query = query.replace("pageOffset", String.valueOf(nextOffset));
+
+        log.info("----- QUERY" + query + "-------------");
+
+        int result = 0;
+        try {
+            List<Product> products = jdbc.queryForObject(query, new InventoryProductListMapper());
+            if (products!=null)
+            result = products.size();
+            log.info("----- hasNext count " + result + "-------------");
+        } catch (Exception e) {
+            log.info("----- hasNext count Exception " + e.getMessage() + "-------------");
+            result = 0;
+        }
+        if (result > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     @Override
-    public List<Product> getProducts(String categoryId, String searchQuery, String userId, String cartId, int page) {
-        List<Product> result = null;
+    public InventoryProduct getProducts(String categoryId, String searchQuery, String userId, String cartId, int page) {
+        InventoryProduct result = new InventoryProduct();
+        List<Product> productList = new ArrayList<>();
         log.info("----- getProducts() -------------");
         if (searchQuery == null) {
             searchQuery = "";
         } else {
             searchQuery = SqlQueryUtils.SEARCH_INV_PRODUCTS.replace("searchQuery", searchQuery);
         }
+        int offset = 0;
         if (page != 0) {
-            page = page * 20;
+            offset = page * 20;
         }
         String query = SqlQueryUtils.LOAD_INV_PRODUCTS.replace("searchQuery", searchQuery);
         query = query.replace("?", searchQuery);
-        query = query.replace("pageOffset", String.valueOf(page));
+        query = query.replace("pageOffset", String.valueOf(offset));
 
         log.info("-----searchQuery " + searchQuery + " -------------");
         log.info("-----QUERY " + query + " -------------");
+        try {
+            productList = jdbc.queryForObject(query, new InventoryProductListMapper());
+            result.setProducts(productList);
+            boolean hasNext = checkHasNext(searchQuery, (page + 1) * 20);
+            log.info("-----hasNext " + hasNext + " -------------");
+            result.setHasNext(hasNext);
+            if (hasNext)
+            result.setNextIndex(page + 1);
+        } catch (Exception e) {
+            log.info("-----Exception " + e.getMessage() + " -------------");
+            result.setHasNext(false);
+            result.setProducts(productList);
+        }
 
-        result = jdbc.queryForObject(query, new InventoryProductListMapper());
-
-        log.info("-----result size " + result.size() + " -------------");
+        log.info("-----result size " + productList.size() + " -------------");
 
         return result;
     }

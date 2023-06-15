@@ -97,7 +97,11 @@ public class SqlQueryUtils {
             "JOIN sku s ON s.id = p.sku " +
              "searchQuery"+
             "LIMIT 20 OFFSET pageOffset";
-
+    public static final String CHECK_HAS_INV = "SELECT COUNT(*) " +
+            "FROM product p " +
+            "JOIN sku s ON s.id = p.sku " +
+            "searchQuery"+
+            "LIMIT 20 OFFSET pageOffset";
 
 
 }

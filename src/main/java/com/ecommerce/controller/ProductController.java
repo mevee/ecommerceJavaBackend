@@ -2,6 +2,7 @@ package com.ecommerce.controller;
 
 import com.ecommerce.model.request.product.ProductDetailRequest;
 import com.ecommerce.model.request.product.ProductQueryRequest;
+import com.ecommerce.model.response.product.InventoryProduct;
 import com.ecommerce.repository.repo.ProductRepository;
 import com.ecommerce.util.AppConstants;
 import com.ecommerce.util.CommonUtils;
@@ -158,8 +159,8 @@ public class ProductController {
         log.info("----------------getProducts() request :" + request + " --------");
         GenericResponse response = CommonUtils.getSuccessResponse(null);
         try {
-            List<Product> skuList = productRepository.getProducts(request.getCategoryId(), request.getSearchQuery(), request.getUserId(), request.getCartId(),request.getPage());
-            response.setData(skuList);
+            InventoryProduct inventoryProduct = productRepository.getProducts(request.getCategoryId(), request.getSearchQuery(), request.getUserId(), request.getCartId(),request.getPage());
+            response.setData(inventoryProduct);
             response.getMeta().setStatus(AppConstants.SUCCESS);
             response.getMeta().setMessageCode(AppConstants.SUCCESS_CODE);
             response.getMeta().setMessageDescription(AppConstants.SUCCESS_MSG);
