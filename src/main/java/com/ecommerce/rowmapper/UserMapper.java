@@ -1,12 +1,4 @@
-/*
- *
- *  * *
- *  *  * Copyright (C) Addverb - All Rights Reserved
- *  *  * Unauthorized copying of this file, via any medium is strictly prohibited
- *  *  * Proprietary and confidential
- *  *
- *
- */
+
 package com.ecommerce.rowmapper;
 
 import com.ecommerce.model.response.user.JavaAuthTokenResponse;
@@ -15,9 +7,6 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/**
- * @author abhishek on 28/01/20.
- */
 public class UserMapper implements RowMapper<JavaAuthTokenResponse> {
 
     @Override

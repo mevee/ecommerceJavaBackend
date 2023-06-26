@@ -1,16 +1,15 @@
 package com.ecommerce.controller;
 
-import com.ecommerce.model.request.product.ProductDetailRequest;
-import com.ecommerce.model.request.product.ProductQueryRequest;
-import com.ecommerce.model.response.product.InventoryProduct;
-import com.ecommerce.service.interfaces.InventoryService;
-import com.ecommerce.service.interfaces.ProductService;
-import com.ecommerce.util.AppConstants;
-import com.ecommerce.util.CommonUtils;
 import com.ecommerce.model.Category;
 import com.ecommerce.model.GenericResponse;
 import com.ecommerce.model.request.product.AddProductRequest;
+import com.ecommerce.model.request.product.ProductDetailRequest;
+import com.ecommerce.model.request.product.ProductQueryRequest;
+import com.ecommerce.model.response.product.InventoryProduct;
 import com.ecommerce.model.sku.Sku;
+import com.ecommerce.service.interfaces.InventoryService;
+import com.ecommerce.util.AppConstants;
+import com.ecommerce.util.CommonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,13 +19,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/product")
+@RequestMapping("/inventory")
 @Slf4j
-public class ProductController {
-    @Autowired
-    private ProductService productService;
+public class InventoryController {
     @Autowired
     private InventoryService inventoryService;
+
     @PostMapping("/detail")
     ResponseEntity<GenericResponse> getProductDetails(@RequestBody ProductDetailRequest request) {
 
@@ -63,7 +61,7 @@ public class ProductController {
     }
 
     @GetMapping("/category")
-    ResponseEntity<GenericResponse> getCategories() {
+    ResponseEntity<GenericResponse> getAllCategories() {
         GenericResponse response = CommonUtils.getSuccessResponse(null);
         try {
             List<Category> category = inventoryService.getCategory();
@@ -76,7 +74,7 @@ public class ProductController {
     }
 
     @GetMapping("/category/{id}")
-    ResponseEntity<GenericResponse> getCategories(@PathVariable("id") String categoryId) {
+    ResponseEntity<GenericResponse> getSubCategory(@PathVariable("id") String categoryId) {
         GenericResponse response = CommonUtils.getSuccessResponse(null);
         try {
             List<Category> category = inventoryService.getSubCategory(categoryId);
@@ -89,12 +87,78 @@ public class ProductController {
         return new ResponseEntity(response, HttpStatus.OK);
     }
 
+    @PostMapping("/add-sku")
+    ResponseEntity<GenericResponse> addSku(@RequestBody Sku categoryId) {
+        GenericResponse response = CommonUtils.getSuccessResponse(null);
+        try {
+            boolean saved = inventoryService.updateSku(categoryId);
+            if (saved) {
+                response.getMeta().setStatus("Success");
+            } else {
+                response.getMeta().setStatus("Failed");
+            }
+        } catch (Exception e) {
+            response.getMeta().setMessageDescription(e.getMessage());
+            response.getMeta().setStatus("Failed");
+            response.getMeta().setMessageCode("400");
+            response.setData(null);
+        }
+
+        return new ResponseEntity(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/get-all-sku")
+    ResponseEntity<GenericResponse> getAllCategory() {
+        GenericResponse response = CommonUtils.getSuccessResponse(null);
+        try {
+            List<Sku> skuList = inventoryService.getAllSku();
+            response.setData(skuList);
+            response.getMeta().setStatus(AppConstants.SUCCESS);
+            response.getMeta().setMessageCode(AppConstants.SUCCESS_CODE);
+            response.getMeta().setMessageDescription(AppConstants.SUCCESS_MSG);
+        } catch (Exception e) {
+            response.getMeta().setStatus("Error");
+            response.getMeta().setMessageCode("Error");
+            response.getMeta().setStatus(AppConstants.ERR400);
+            response.getMeta().setMessageCode(AppConstants.ERR400);
+            response.getMeta().setMessageDescription(e.getMessage());
+        }
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping("/add-product")
+    ResponseEntity<GenericResponse> addProduct(@RequestBody AddProductRequest product) {
+        GenericResponse response = CommonUtils.getSuccessResponse(null);
+        log.info("----------addProduct()" + product + "---------");
+
+        if (product == null) {
+            return new ResponseEntity(CommonUtils.paramMissing(response), HttpStatus.OK);
+        }/*else if (product.){
+
+        }*/
+        try {
+            boolean saved = inventoryService.updateProduct(product);
+            if (saved) {
+                response.getMeta().setStatus("Success");
+            } else {
+                response.getMeta().setStatus("Failed");
+                response.getMeta().setMessageCode("Failed to save");
+            }
+        } catch (Exception e) {
+            response = CommonUtils.paramMissing(response);
+            response.getMeta().setMessageDescription(e.getMessage());
+        }
+
+        return new ResponseEntity(response, HttpStatus.OK);
+    }
+
     @PostMapping("/get-products")
     ResponseEntity<GenericResponse> getProducts(@RequestBody ProductQueryRequest request) {
         log.info("----------------getProducts() request :" + request + " --------");
         GenericResponse response = CommonUtils.getSuccessResponse(null);
         try {
-            InventoryProduct inventoryProduct = productService.loadAllProduct(request.getCategoryId(), request.getSearchQuery(), request.getUserId(), request.getCartId(),request.getPage());
+            InventoryProduct inventoryProduct = inventoryService.loadAllProduct(request.getCategoryId(), request.getSearchQuery(), request.getUserId(), request.getCartId(), request.getPage());
             response.setData(inventoryProduct);
             response.getMeta().setStatus(AppConstants.SUCCESS);
             response.getMeta().setMessageCode(AppConstants.SUCCESS_CODE);

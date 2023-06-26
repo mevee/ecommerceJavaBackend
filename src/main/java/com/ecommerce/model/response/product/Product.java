@@ -1,6 +1,7 @@
 package com.ecommerce.model.response.product;
 
 import com.ecommerce.model.DataModel;
+import com.ecommerce.model.sku.ProductImage;
 import lombok.Data;
 import lombok.ToString;
 
@@ -17,7 +18,7 @@ public class Product extends DataModel {
     String name;
     String description;
     String fullDesc;
-    List<String> images;
+    List<ProductImage> images;
     String highValue;
     String inCart;
     List<ProductVariants> variants;

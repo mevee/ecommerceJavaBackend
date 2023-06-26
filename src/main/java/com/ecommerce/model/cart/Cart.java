@@ -13,7 +13,7 @@ public class Cart extends DataModel {
     String id;
     int totalQuantity;
     String description;
-    String offer;
+    String coupon;
     String deliveryCharges;
     List<Product> cartProducts;
 

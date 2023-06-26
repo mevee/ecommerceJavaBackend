@@ -25,6 +25,15 @@ public class SqlQueryUtils {
         public static String COL_SUB_CAT = "subCat";
     }
 
+    final static public class TABLE_PROD_IMAGES {
+        public static String name = "productImages";
+
+        public static String id = "id";
+        public static String pId = "pId";
+        public static String image = "image";
+    }
+
+
     final static public class TABLE_SKU {
         public static String TABLE_NAME = "sku";
         public static String COL_ID = "id";
@@ -45,6 +54,25 @@ public class SqlQueryUtils {
         public static String price = "price";
         public static String inventoryQty = "inventoryQty";
         public static String tags = "tags";
+    }
+
+    final static public class TABLE_CART {
+        public static String TABLE_NAME = "cart";
+        public static String id = "id";
+        public static String userId = "userId";
+        public static String total = "total";
+        public static String createdAt = "createdAt";
+        public static String updatedAt = "updatedAt";
+    }
+
+    final static public class TABLE_CART_ITEMS {
+        public static String TABLE_NAME = "cartItems";
+        public static String id = "id";
+        public static String prodId = "prodId";
+        public static String cartId = "cartId";
+        public static String qty = "qty";
+        public static String createdAt = "createdAt";
+        public static String updatedAt = "updatedAt";
     }
     /*INSERT INTO users(fName,lName,email,phone,countryCode,roleId,password) values("Oye","Raju","email@gmail.com","1234567890","IN",1,"123456");
      */
@@ -92,17 +120,37 @@ public class SqlQueryUtils {
             "JOIN sku s ON s.id = p.sku";
 
     public static final String SEARCH_INV_PRODUCTS = "WHERE s.name LIKE '%searchQuery%' or p.tags  LIKE '%searchQuery%' ";
-     public static final String LOAD_INV_PRODUCTS = "SELECT p.id, p.sku, p.price, p.inventoryQty, s.name, s.description, s.unit, s.weight " +
+    public static final String LOAD_INV_PRODUCTS = "SELECT p.id, p.sku, p.price, p.inventoryQty, s.name, s.description, s.unit, s.weight " +
             "FROM product p " +
             "JOIN sku s ON s.id = p.sku " +
-             "searchQuery"+
+            "searchQuery" +
             "LIMIT 20 OFFSET pageOffset";
-    public static final String CHECK_HAS_INV = "SELECT COUNT(*) " +
-            "FROM product p " +
-            "JOIN sku s ON s.id = p.sku " +
-            "searchQuery"+
-            "LIMIT 20 OFFSET pageOffset";
+    public static final String VALID_CART = "SELECT COUNT(*) FROM " + TABLE_CART.TABLE_NAME + " where id:cartId";
 
+    public static final String CREATE_CART = "INSERT INTO "
+            + TABLE_CART.TABLE_NAME
+            + " (" + TABLE_CART.userId + ",\n"
+            + " " + TABLE_CART.total + ")\n"
+            + " VALUES (?,?)";
+
+    public static final String INSERT_INTO_CART = "INSERT INTO "
+            + TABLE_CART_ITEMS.TABLE_NAME
+            + " (" + TABLE_CART_ITEMS.cartId + ",\n"
+            + " " + TABLE_CART_ITEMS.prodId + ",\n"
+            + " " + TABLE_CART_ITEMS.qty + ")\n"
+            + " VALUES (?,?,?)";
+    public static final String UPDATE_INTO_CART = "UPDATE "
+            + TABLE_CART_ITEMS.TABLE_NAME +" SET"
+            + " " + TABLE_CART_ITEMS.qty
+            + " VALUES (?,?,?,?)";
+    /*UPDATE cartItems SET qty =5 WHERE prodId=22 and cartId=12
+     */
+    public static final String UPDATE_CART_ITEM = "INSERT INTO "
+            + TABLE_CART_ITEMS.TABLE_NAME
+            + " (" + TABLE_CART_ITEMS.cartId + ",\n"
+            + " " + TABLE_CART_ITEMS.prodId + ",\n"
+            + " " + TABLE_CART_ITEMS.qty + ")\n"
+            + " VALUES (?,?,?)";
 
 }
 

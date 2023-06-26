@@ -21,7 +21,14 @@ public class CommonUtils {
         meta.setMessageDescription(AppConstants.BAD_CREDENTIALS);
         meta.setStatus(AppConstants.ERR400);
         meta.setRequestId("" + System.currentTimeMillis());
-
+        return response;
+    }
+    static public <T> GenericResponse<T> error(GenericResponse<T> response,String message) {
+        Meta meta = response.getMeta();
+        meta.setMessageCode(AppConstants.ERR400);
+        meta.setMessageDescription(message);
+        meta.setStatus(AppConstants.ERR400);
+        meta.setRequestId("" + System.currentTimeMillis());
         return response;
     }
 
