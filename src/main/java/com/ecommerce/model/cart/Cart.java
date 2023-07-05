@@ -12,7 +12,7 @@ import java.util.List;
 public class Cart extends DataModel {
     String id;
     int totalQuantity;
-    String description;
+    int totalPayable;
     String coupon;
     String deliveryCharges;
     List<Product> cartProducts;

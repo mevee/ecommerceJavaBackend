@@ -127,6 +127,7 @@ public class SqlQueryUtils {
             "LIMIT 20 OFFSET pageOffset";
     public static final String VALID_CART = "SELECT COUNT(*) FROM " + TABLE_CART.TABLE_NAME + " where id:cartId";
 
+    public static final String LOAD_INV_PRODUCTS_FOR_A_CART = "SELECT p.id, p.sku, p.price, s.name, s.description, s.unit, s.weight, ci.qty FROM product p , sku s ,cartItems ci,cart c  WHERE p.sku= s.id and c.id = :id and c.id=ci.cartId and ci.prodId=p.id";
     public static final String CREATE_CART = "INSERT INTO "
             + TABLE_CART.TABLE_NAME
             + " (" + TABLE_CART.userId + ",\n"

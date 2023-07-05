@@ -1,16 +1,15 @@
 package com.ecommerce.controller;
 
+import com.ecommerce.model.Category;
+import com.ecommerce.model.GenericResponse;
 import com.ecommerce.model.request.product.ProductDetailRequest;
 import com.ecommerce.model.request.product.ProductQueryRequest;
 import com.ecommerce.model.response.product.InventoryProduct;
+import com.ecommerce.model.response.product.Product;
 import com.ecommerce.service.interfaces.InventoryService;
 import com.ecommerce.service.interfaces.ProductService;
 import com.ecommerce.util.AppConstants;
 import com.ecommerce.util.CommonUtils;
-import com.ecommerce.model.Category;
-import com.ecommerce.model.GenericResponse;
-import com.ecommerce.model.request.product.AddProductRequest;
-import com.ecommerce.model.sku.Sku;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,32 +26,25 @@ public class ProductController {
     private ProductService productService;
     @Autowired
     private InventoryService inventoryService;
+
     @PostMapping("/detail")
     ResponseEntity<GenericResponse> getProductDetails(@RequestBody ProductDetailRequest request) {
-
+        log.info("---------------getProductDetails()---------------");
+        log.info("---------------REQUEST " + request + "---------------");
         GenericResponse response = CommonUtils.getSuccessResponse(null);
 
-        System.out.println("---------------Check register request---------------");
-        log.info("-----REQUEST " + request);
-
-        if (request == null || request.getProductId() == null) {
+        if (request == null || request.getProductId() == null || request.getUserId() == null) {
             response.getMeta().setMessageCode(AppConstants.ERR400);
             response.getMeta().setStatus(AppConstants.ERR400);
             response.getMeta().setMessageDescription(AppConstants.BAD_CREDENTIALS);
         } else {
-            boolean isSavedSuccess = false;
             try {
-//                isSavedSuccess = productRepository.register(request);
+                Product product = productService.productDetail(request.getProductId(), request.getUserId(), request.getCartId());
+                response.setData(product);
             } catch (Exception e) {
-                isSavedSuccess = false;
+                response.getMeta().setMessageDescription(e.getMessage());
                 response.getMeta().setStatus(AppConstants.ERR400);
                 response.getMeta().setMessageCode(AppConstants.ERR400);
-                response.getMeta().setMessageDescription(e.getMessage());
-            }
-            if (isSavedSuccess) {
-                response.getMeta().setStatus(AppConstants.SUCCESS);
-                response.getMeta().setMessageCode(AppConstants.SUCCESS_CODE);
-                response.getMeta().setMessageDescription(AppConstants.SUCCESS_MSG);
             }
         }
 
@@ -94,7 +86,7 @@ public class ProductController {
         log.info("----------------getProducts() request :" + request + " --------");
         GenericResponse response = CommonUtils.getSuccessResponse(null);
         try {
-            InventoryProduct inventoryProduct = productService.loadAllProduct(request.getCategoryId(), request.getSearchQuery(), request.getUserId(), request.getCartId(),request.getPage());
+            InventoryProduct inventoryProduct = productService.loadAllProduct(request.getCategoryId(), request.getSearchQuery(), request.getUserId(), request.getCartId(), request.getPage());
             response.setData(inventoryProduct);
             response.getMeta().setStatus(AppConstants.SUCCESS);
             response.getMeta().setMessageCode(AppConstants.SUCCESS_CODE);

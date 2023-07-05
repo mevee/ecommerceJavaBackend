@@ -1,16 +1,19 @@
 package com.ecommerce.repository;
 
 import com.ecommerce.model.Coupon;
-import com.ecommerce.model.cart.UpdateCartModel;
-import com.ecommerce.model.response.product.Product;
+import com.ecommerce.model.cart.Boolean;
+import com.ecommerce.model.response.product.InventoryProduct;
 import com.ecommerce.repository.repo.CartRepository;
+import com.ecommerce.repository.repo.InventoryRepository;
 import com.ecommerce.util.sqlutils.SqlQueryUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 @Slf4j
@@ -19,7 +22,12 @@ public class CartRepositoryImpl implements CartRepository {
     @Autowired
     JdbcTemplate template;
 
-    private int getTotalCart(String cartId) {
+    @Autowired
+    InventoryRepository inventoryRepository;
+
+
+    @Override
+    public int getTotalCart(String cartId) {
         int total = 0;
         String query = "SELECT SUM(p.price) FROM cartItems ci , product p WHERE ci.cartId= " + cartId + " and ci.prodId =p.id";
         log.info("-------query: " + query + "-------");
@@ -35,7 +43,8 @@ public class CartRepositoryImpl implements CartRepository {
     }
 
 
-    private int getLastProductQty(String id) {
+    @Override
+    public int getLastProductQty(String id) {
         int total = 0;
         String query = "SELECT SUM(ci.qty) FROM cartItems ci WHERE ci.id= " + id;
         try {
@@ -45,7 +54,9 @@ public class CartRepositoryImpl implements CartRepository {
         }
         return total;
     }
-    private int getIdOfProduct(String cartId,String productId) {
+
+    @Override
+    public int getIdOfProduct(String cartId, String productId) {
         int total = 0;
         String query = "SELECT id FROM cartItems where prodId=" + productId + " and cartId=" + cartId;
         try {
@@ -55,7 +66,9 @@ public class CartRepositoryImpl implements CartRepository {
         }
         return total;
     }
-    private int getCartId(String userId) {
+
+    @Override
+    public int getCartId(String userId) {
         int cartId = 0;
         String query = "SELECT id FROM cart WHERE cart.userId = " + userId + " LIMIT 1";
         log.info("-------query: " + query + "-------");
@@ -105,50 +118,49 @@ public class CartRepositoryImpl implements CartRepository {
             }
         } catch (Exception e) {
             log.info("-------Exception: " + e.getMessage() + "-------");
+            throw new Exception(e.getMessage());
         }
-
-        return false;
     }
 
     @Override
-    public UpdateCartModel updateCartQty(String action, String userId, String productId, String cartId, int quantity) throws Exception {
+    public Boolean updateCartQty(String action, String userId, String productId, String cartId, int quantity) throws Exception {
         boolean isCartExist = isValidCart(cartId);
-        UpdateCartModel cartModel = new UpdateCartModel();
+        Boolean cartModel = new Boolean();
 
         if (isCartExist) {
             boolean isProductExist = isProductExistInCart(cartId, productId);
             if (isProductExist) {
-                int id = getIdOfProduct(cartId,productId);
+                int id = getIdOfProduct(cartId, productId);
                 int lastQty = getLastProductQty(String.valueOf(id));
-                if (action.equals("add")){
-                    lastQty= lastQty+quantity;
-                }else{
-                    if (lastQty>1&&quantity<lastQty){
-                        lastQty= lastQty-quantity;
-                    }else{
+                if (action.equals("add")) {
+                    lastQty = lastQty + quantity;
+                } else {
+                    if (lastQty > 1 && quantity < lastQty) {
+                        lastQty = lastQty - quantity;
+                    } else {
                         throw new Exception("Invalid qty");
                     }
                 }
 
-                String query = "UPDATE " + SqlQueryUtils.TABLE_CART_ITEMS.TABLE_NAME +" SET"
-                        + " " + SqlQueryUtils.TABLE_CART_ITEMS.qty+"="+(lastQty)
-                        + " WHERE prodId="+productId+" and cartId="+cartId+" and id="+id;
+                String query = "UPDATE " + SqlQueryUtils.TABLE_CART_ITEMS.TABLE_NAME + " SET"
+                        + " " + SqlQueryUtils.TABLE_CART_ITEMS.qty + "=" + (lastQty)
+                        + " WHERE prodId=" + productId + " and cartId=" + cartId + " and id=" + id;
                 log.info("-------QUERY: ProductExist in cart" + query + "-------");
 
                 int result = template.update(query);
                 log.info("-------result: " + result + "-------");
                 if (result > 0) {
                     cartModel.setCartId(Integer.parseInt(cartId));
-                }else{
+                } else {
                     throw new Exception("Add to cart failed");
                 }
-             }else{
+            } else {
                 log.info("-------QUERY: add new item to cart" + SqlQueryUtils.INSERT_INTO_CART + "-------");
                 int result = template.update(SqlQueryUtils.INSERT_INTO_CART, new Object[]{cartId, productId, quantity});
-                 log.info("-------result: " + result + "-------");
+                log.info("-------result: " + result + "-------");
                 if (result > 0) {
                     cartModel.setCartId(Integer.parseInt(cartId));
-                }else{
+                } else {
                     throw new Exception("Add to cart failed");
                 }
             }
@@ -169,7 +181,7 @@ public class CartRepositoryImpl implements CartRepository {
 
                 if (result > 0 && createCartResult > 0) {
                     cartModel.setCartId(freshCartId);
-                }else{
+                } else {
                     throw new Exception("Not implemented exception");
                 }
             } catch (Exception e) {
@@ -194,16 +206,38 @@ public class CartRepositoryImpl implements CartRepository {
     }
 
     @Override
-    public UpdateCartModel removeFromCart(String productId, String cartId, int quantity) throws Exception {
+    public boolean deleteFromCart(String productId, String cartId, int quantity) throws Exception {
+        log.info("-------deleteFromCart() -------");
+//        log.info("" + e.getMessage() + "-------");
         if (!isValidCart(cartId)) {
             throw new Exception("Invalid cart id");
+        }else if (getIdOfProduct(cartId,productId)==0){
+            throw new Exception("Product not exist in cart");
         }
-        return null;
-    }
+        String query = "DELETE FROM cartItems ci WHERE ci.prodId ="+productId+" AND ci.cartId ="+cartId;
+//        Map<String, Object> paramMap = new HashMap<String, Object>();
+//        paramMap.put("cartId", cartId);
+//        paramMap.put("productId", productId);
+        log.info("-------query: " + query + "-------");
+        try {
+            int result = template.update(query);
+            log.info("-------result: " + result + "-------");
+
+            if (result == 1) {
+                return true;
+            } else {
+                throw new Exception("Item not removed");
+            }
+        } catch (Exception e) {
+            log.error("-------" + e + "-------");
+            throw new Exception(e.getMessage());
+        }
+
+     }
 
     @Override
-    public List<Product> getProducts() throws Exception {
-        return null;
+    public InventoryProduct getProducts(String cartId) throws Exception {
+        return inventoryRepository.getProductsOfABasket(cartId);
     }
 
     @Override

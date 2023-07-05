@@ -22,8 +22,8 @@ public class ProductRepositoryImpl implements ProductRepository {
     private InventoryRepository inventoryRepository;
 
     @Override
-    public Product getProductDetail(String productId, String cartId, String userId) {
-        return null;
+    public Product getProductDetail(String productId, String cartId, String userId) throws Exception {
+        return inventoryRepository.getProductDetail(productId, cartId, userId);
     }
 
     @Override

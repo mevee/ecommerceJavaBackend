@@ -31,12 +31,12 @@ public interface InventoryRepository {
 
     boolean isValidProduct(int skuId) throws Exception;
 
-    Product getProductDetail(String productId, String cartId, String userId);
+    Product getProductDetail(String productId, String cartId, String userId) throws Exception;
 
     boolean updateProductImage(ProductImage product) throws Exception;
 
     boolean removeProductImage(ProductImage inventoryProduct) throws Exception;
     List<ProductImage> getProductImage(String productId) throws Exception;
     InventoryProduct getProducts(String categoryId, String searchQuery, String userId, String cartId, int page);
-
+    InventoryProduct getProductsOfABasket(String cartId);
 }

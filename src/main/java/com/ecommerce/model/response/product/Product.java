@@ -13,6 +13,7 @@ public class Product extends DataModel {
     int id;
     int price;
     int inventoryQty;
+    int qty;
     int unit;
     int weight;
     String name;
@@ -20,7 +21,7 @@ public class Product extends DataModel {
     String fullDesc;
     List<ProductImage> images;
     String highValue;
-    String inCart;
+    Boolean inCart;
     List<ProductVariants> variants;
 
 }

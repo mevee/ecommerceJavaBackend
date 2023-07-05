@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface ProductRepository {
 
-    Product getProductDetail(String productId, String cartId, String userId);
+    Product getProductDetail(String productId, String cartId, String userId) throws Exception;
 
     InventoryProduct getProducts(String categoryId, String searchQuery, String userId, String cartId, int page);
 

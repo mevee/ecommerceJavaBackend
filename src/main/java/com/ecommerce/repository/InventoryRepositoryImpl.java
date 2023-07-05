@@ -7,10 +7,7 @@ import com.ecommerce.model.response.product.Product;
 import com.ecommerce.model.sku.ProductImage;
 import com.ecommerce.model.sku.Sku;
 import com.ecommerce.repository.repo.InventoryRepository;
-import com.ecommerce.rowmapper.CategoryListMapper;
-import com.ecommerce.rowmapper.InventoryProductListMapper;
-import com.ecommerce.rowmapper.ProductImagesMapper;
-import com.ecommerce.rowmapper.SkuListMapper;
+import com.ecommerce.rowmapper.*;
 import com.ecommerce.util.sqlutils.SqlQueryUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,8 +25,13 @@ public class InventoryRepositoryImpl implements InventoryRepository {
     private JdbcTemplate jdbc;
 
     @Override
-    public Product getProductDetail(String productId, String cartId, String userId) {
-        return null;
+    public Product getProductDetail(String productId, String cartId, String userId) throws Exception {
+        try {
+            Product product = isProductExist(productId);
+            return product;
+        } catch (Exception e) {
+            throw e;
+        }
     }
 
     @Override
@@ -42,25 +44,50 @@ public class InventoryRepositoryImpl implements InventoryRepository {
         return false;
     }
 
+    public Product isProductExist(String productId) throws Exception {
+        log.info("----- isProductExist(" + productId + ")-------------");
+        Product imageList = null;
+        String query = "SELECT * FROM product p Join sku s On p.id =" + productId + " and p.sku = s.id";
+        log.info("----- query " + query + "-------------");
+        int prodId = 0;
+        try {
+            prodId = Integer.parseInt(productId);
+        } catch (Exception e) {
+        }
+
+        if (Integer.parseInt(productId) <= 0) {
+            return null;
+        } else {
+            try {
+                imageList = jdbc.queryForObject(query, new InventoryProductMapper());
+                log.info("----- PID " + prodId + " :" + imageList + "-------------");
+            } catch (Exception e) {
+                log.info("----- Exception " + e.getMessage() + "-------------");
+            }
+        }
+
+        return imageList;
+    }
+
     @Override
     public List<ProductImage> getProductImage(String productId) throws Exception {
         log.info("----- getProductImage(" + productId + ")-------------");
         List<ProductImage> imageList = null;
-        String query = "SELECT *,imageLink as image FROM " + SqlQueryUtils.TABLE_PROD_IMAGES.name + " WHERE pId=" + productId;
+        String query = "SELECT *, imageLink as image FROM " + SqlQueryUtils.TABLE_PROD_IMAGES.name + " WHERE pId=" + productId;
         log.info("----- query " + query + "-------------");
         int prodId = 0;
         try {
-            prodId =Integer.parseInt(productId);
-        }catch (Exception e){
+            prodId = Integer.parseInt(productId);
+        } catch (Exception e) {
         }
 
-        if (Integer.parseInt(productId)<=0){
+        if (Integer.parseInt(productId) <= 0) {
             return null;
-        }else{
+        } else {
             try {
-                imageList = jdbc.queryForObject(query,new ProductImagesMapper());
-                log.info("----- PID " + prodId +"imageList :" +imageList.size()+"-------------");
-            }catch (Exception e){
+                imageList = jdbc.queryForObject(query, new ProductImagesMapper());
+                log.info("----- PID " + prodId + "imageList :" + imageList.size() + "-------------");
+            } catch (Exception e) {
                 log.info("----- imageList Exception " + e.getMessage() + "-------------");
             }
         }
@@ -119,12 +146,12 @@ public class InventoryRepositoryImpl implements InventoryRepository {
             productList = jdbc.queryForObject(query, new InventoryProductListMapper());
             result.setProducts(productList);
             if (productList != null) {
-                for (int i = 0;i <productList.size();i++){
+                for (int i = 0; i < productList.size(); i++) {
                     Product element = productList.get(i);
                     log.info("-----foreach " + element + " -------------");
                     try {
-                        element.setImages(getProductImage(""+element.getId()));
-                    }catch (Exception e){
+                        element.setImages(getProductImage("" + element.getId()));
+                    } catch (Exception e) {
                         log.info("-----Exception image " + e.getMessage() + " -------------");
                     }
                 }
@@ -136,6 +163,39 @@ public class InventoryRepositoryImpl implements InventoryRepository {
 
             if (hasNext)
                 result.setNextIndex(page + 1);
+        } catch (Exception e) {
+            log.info("-----Exception " + e.getMessage() + " -------------");
+            result.setHasNext(false);
+            result.setProducts(productList);
+        }
+
+        log.info("-----result size " + productList.size() + " -------------");
+
+        return result;
+    }
+
+    @Override
+    public InventoryProduct getProductsOfABasket(String cartId) {
+        InventoryProduct result = new InventoryProduct();
+        List<Product> productList = new ArrayList<>();
+        log.info("----- getProductsOfABasket() cartId:" + cartId + " -------------");
+
+        String query = SqlQueryUtils.LOAD_INV_PRODUCTS_FOR_A_CART.replace(":id", cartId);
+        log.info("-----QUERY " + query + " -------------");
+        try {
+            productList = jdbc.queryForObject(query, new CartProductListMapper());
+            result.setProducts(productList);
+            if (productList != null) {
+                for (int i = 0; i < productList.size(); i++) {
+                    Product element = productList.get(i);
+                    log.info("-----foreach " + element + " -------------");
+                    try {
+                        element.setImages(getProductImage("" + element.getId()));
+                    } catch (Exception e) {
+                        log.info("-----Exception image " + e.getMessage() + " -------------");
+                    }
+                }
+            }
         } catch (Exception e) {
             log.info("-----Exception " + e.getMessage() + " -------------");
             result.setHasNext(false);

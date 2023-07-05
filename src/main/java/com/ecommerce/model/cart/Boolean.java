@@ -6,7 +6,7 @@ import lombok.ToString;
 
 @ToString
 @Data
-public class UpdateCartModel extends DataModel {
+public class Boolean extends DataModel {
     int productId;
     int userId;
     int cartId;

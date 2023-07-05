@@ -2,7 +2,8 @@ package com.ecommerce.controller;
 
 import com.ecommerce.model.Coupon;
 import com.ecommerce.model.GenericResponse;
-import com.ecommerce.model.cart.UpdateCartModel;
+import com.ecommerce.model.cart.Boolean;
+import com.ecommerce.model.cart.Cart;
 import com.ecommerce.model.request.cart.CartUpdateRequest;
 import com.ecommerce.model.request.cart.GetCartDetailRequest;
 import com.ecommerce.service.interfaces.CartService;
@@ -25,9 +26,9 @@ import java.util.Map;
 @Slf4j
 public class CartController {
     @Autowired
-    private CartService inventoryService;
+    private CartService cartService;
 
-    @PostMapping("/detail")
+    @PostMapping("/cart-detail")
     ResponseEntity<GenericResponse> getCartDetail(@RequestBody GetCartDetailRequest request) {
 
         GenericResponse response = CommonUtils.getSuccessResponse(null);
@@ -40,20 +41,18 @@ public class CartController {
             response.getMeta().setStatus(AppConstants.ERR400);
             response.getMeta().setMessageDescription(AppConstants.BAD_CREDENTIALS);
         } else {
-            boolean isSavedSuccess = false;
             try {
-//                isSavedSuccess = productRepository.register(request);
+                Cart cart = cartService.getCart(request);
+                response.setData(cart);
+                response.getMeta().setStatus(AppConstants.SUCCESS);
+                response.getMeta().setMessageCode(AppConstants.SUCCESS_CODE);
+                response.getMeta().setMessageDescription(AppConstants.SUCCESS_MSG);
             } catch (Exception e) {
-                isSavedSuccess = false;
                 response.getMeta().setStatus(AppConstants.ERR400);
                 response.getMeta().setMessageCode(AppConstants.ERR400);
                 response.getMeta().setMessageDescription(e.getMessage());
             }
-            if (isSavedSuccess) {
-                response.getMeta().setStatus(AppConstants.SUCCESS);
-                response.getMeta().setMessageCode(AppConstants.SUCCESS_CODE);
-                response.getMeta().setMessageDescription(AppConstants.SUCCESS_MSG);
-            }
+
         }
 
         System.out.println("------------return bad request or bad parameter response--------------");
@@ -65,27 +64,27 @@ public class CartController {
     @PostMapping("/update-to-cart")
     ResponseEntity<GenericResponse> addToCart(@RequestBody CartUpdateRequest request) {
         System.out.println("---------------Check getCartDetail() request---------------");
-        System.out.println("---------------"+request+"---------------");
+        System.out.println("---------------" + request + "---------------");
 
         GenericResponse response = CommonUtils.getSuccessResponse(null);
-        Map<String,Object> data =new HashMap();
+        Map<String, Object> data = new HashMap();
         if (request == null || request.getUserId() == 0) {
             return new ResponseEntity<>(CommonUtils.error(response, "Invalid user id"), HttpStatus.OK);
         } else if (request.getProdId() <= 0) {
             return new ResponseEntity<>(CommonUtils.error(response, "Invalid product id"), HttpStatus.OK);
         } else if (request.getQty() <= 0) {
             return new ResponseEntity<>(CommonUtils.error(response, "Invalid Quantity"), HttpStatus.OK);
-        } else if (request.getAction()==null||request.getAction().isEmpty()) {
+        } else if (request.getAction() == null || request.getAction().isEmpty()) {
             return new ResponseEntity<>(CommonUtils.error(response, "Invalid action"), HttpStatus.OK);
         }
         try {
 
-            UpdateCartModel updateCartModel = inventoryService.updateCartQty(request.getAction(),"" + request.getUserId(), "" + request.getProdId(), "" + request.getCartId(), request.getQty());
+            Boolean updateCartModel = cartService.updateCartQty(request.getAction(), "" + request.getUserId(), "" + request.getProdId(), "" + request.getCartId(), request.getQty());
             data.put("cartId", updateCartModel.getCartId());
             data.put("qty", String.valueOf(updateCartModel.getQty()));
             response.setData(data);
         } catch (Exception e) {
-            log.info("----------e:" + e.getMessage()+"------------");
+            log.info("----------e:" + e.getMessage() + "------------");
             response = CommonUtils.error(response, e.getMessage());
         }
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -98,7 +97,7 @@ public class CartController {
             return new ResponseEntity<>(CommonUtils.paramMissing(response), HttpStatus.OK);
         }
         try {
-            inventoryService.removeFromCart("" + request.getProdId(), "" + request.getCartId(), request.getQty());
+            cartService.removeFromCart("" + request.getProdId(), "" + request.getCartId(), request.getQty());
         } catch (Exception e) {
             response = CommonUtils.error(response, e.getMessage());
         }
@@ -106,13 +105,16 @@ public class CartController {
     }
 
     @PostMapping("/delete-cart-item")
-    ResponseEntity<GenericResponse> deleteCartQty(@RequestBody CartUpdateRequest request) {
+    ResponseEntity<GenericResponse> deleteCartItem(@RequestBody CartUpdateRequest request) {
+        System.out.println("---------------deleteCartQty()---------------");
+        System.out.println("---------------" + request + "---------------");
+
         GenericResponse response = CommonUtils.getSuccessResponse(null);
         if (request == null || request.getCartId() == 0 || request.getUserId() == 0) {
             return new ResponseEntity<>(CommonUtils.paramMissing(response), HttpStatus.OK);
         }
         try {
-            inventoryService.removeFromCart("" + request.getProdId(), "" + request.getCartId(), 0);
+            cartService.removeFromCart("" + request.getProdId(), "" + request.getCartId(), 0);
         } catch (Exception e) {
             response = CommonUtils.error(response, e.getMessage());
         }
